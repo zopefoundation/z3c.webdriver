@@ -1,0 +1,79 @@
+====
+ajax
+====
+
+ATTENTION: This test will start and stop a WSGI server in our test setup using
+our simple test WSGI application. Our SeleniumBrowser browser instance will
+access this WSGI application like a real browser. This means the test browser
+will process any JavaScript. See setUpWSGITestApplication in p01/tester/tests.py
+
+  >>> import z3c.webdriver.testing
+  >>> logger = z3c.webdriver.testing.getLogger('z3c.webdriver.server')
+
+Let's setup our test browser:
+
+  >>> from z3c.webdriver.browser import SeleniumBrowser
+  >>> from pprint import pprint
+
+  >>> appURL = 'http://localhost:9090/'
+  >>> browser = SeleniumBrowser(driver)
+  >>> browser.open(appURL + 'post.html')
+
+Check our server log:
+
+  >>> print logger.normalized
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /post.html HTTP/1.1" 200 1699
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /jquery-1.7.1.js HTTP/1.1" 200 248235
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "POST /post-first.html HTTP/1.1" 200 51
+
+
+And we will get our test page content. Take care this is stil the initial
+content without the ajax loaded content. Ajax loaded content is only available
+in memory and not in our html value:
+
+  >>> print browser.get("#result").text
+  FIRST DATA
+
+  >>> print browser.get("#status").text
+  success
+
+
+Now let's test if we can send an ajax request started with JQuery:
+
+#  >>> clicker = browser.get("#clickable")
+#  >>> clicker.click()
+
+  >>> browser.js('$("#clickable").click()')
+  >>> result = browser.get("#result")
+  >>> print result.text
+  SECOND DATA
+
+  >>> status = browser.get("#status")
+  >>> print status.text
+  success
+
+Check a page that isn't there. Unfortunately the webdriver developers
+don't want to provide us with the request status nor with the headers.
+
+  >>> browser.open(appURL + '404.html')
+  >>> print browser.html
+  <div>Not Found</div>
+
+We can get some information from our log though:
+
+  >>> print logger.normalized
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /post.html HTTP/1.1" 200 1699
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /jquery-1.7.1.js HTTP/1.1" 200 248235
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "POST /post-first.html HTTP/1.1" 200 51
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "POST /post-second.html HTTP/1.1" 200 52
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /404.html HTTP/1.1" 404 20
+
+
+tear down
+---------
+
+Don't close unless the driver was started by this test
+
+#  >>> browser.close()
+
+  >>> logger.uninstall()

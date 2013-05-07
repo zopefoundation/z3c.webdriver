@@ -1,0 +1,10 @@
+*.pyc
+__pycache__
+src/*.egg-info
+.installed.cfg
+.tox
+ghostdriver.log
+bin
+develop-eggs
+docs
+parts

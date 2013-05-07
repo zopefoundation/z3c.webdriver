@@ -1,0 +1,65 @@
+==========
+WSGIServer
+==========
+
+ATTENTION: This test will start a server at localhost:9090
+
+This test will not start a WSGI server in our test setup. We will do this
+explicit here in our test. Let's define a WSGI application and start a test
+server.
+
+  >>> from z3c.webdriver.server import startWSGIServer
+  >>> from z3c.webdriver.server import stopWSGIServer
+  >>> import z3c.webdriver.testing
+  >>> logger = z3c.webdriver.testing.getLogger('z3c.webdriver.server')
+
+  >>> def myapp(environ, start_response):
+  ...     start_response('200 Ok', [('Content-type', 'text/html'),])
+  ...     return ['<html>Hello world!</html>']
+
+
+startWSGIServer
+---------------
+
+Now start a server
+
+  >>> server = startWSGIServer('myapp', myapp, 'http://localhost:9090')
+
+As you can see, we can access the server with a simple urllib call:
+
+  >>> import httplib
+  >>> conn = httplib.HTTPConnection('localhost:9090')
+  >>> conn.request("GET", "/index.html")
+  >>> response = conn.getresponse()
+  >>> response.status
+  200
+
+  >>> print response.read()
+  <html>Hello world!</html>
+
+
+As you can see, we will log the server response to our logger called:
+p01.testing.server:
+
+  >>> print logger
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /index.html HTTP/1.1" 200 25
+
+You can also directly get a normalized output:
+
+  >>> print logger.normalized
+  INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /index.html HTTP/1.1" 200 25
+
+
+stopWSGIServer
+--------------
+
+  >>> stopWSGIServer('myapp')
+
+Ans clear our logger:
+
+  >>> logger.clear()
+  >>> print logger
+
+And uninstall our loggers:
+
+  >>> logger.uninstall()

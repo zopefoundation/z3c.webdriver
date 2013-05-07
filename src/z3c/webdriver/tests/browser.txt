@@ -1,0 +1,230 @@
+===============
+SeleniumBrowser
+===============
+
+This test will show how we can setup a SeleniumBrowser and access a weg page
+using a simple GET request and submit a form using javascript. Note, this
+test will not do ajax calls. We simply tell that our SeleniumBrowser should
+click on a clickable element using JQuery which does a form submit.
+
+ATTENTION: This test will start and stop a WSGI server in our test setup using
+our simple test WSGI application. Our SeleniumBrowser browser instance will
+access this WSGI application like a real browser. This means the test browser
+will process any JavaScript.
+See setUpWSGITestApplication in z3c/webdriver/tests.py
+
+Let's setup our SeleniumBrowser test browser:
+
+  >>> from pprint import pprint
+  >>> from z3c.webdriver.browser import SeleniumBrowser
+
+  >>> appURL = 'http://localhost:9090/'
+  >>> browser = SeleniumBrowser(driver)
+  >>> browser.open(appURL + 'search.html')
+
+  >> from dbgp.client import brk; brk('127.0.0.1')
+
+
+As you can see we will get the right url:
+
+  >>> browser.url
+  u'http://localhost:9090/search.html'
+
+And we will get our test page content:
+
+  >>> print browser.html
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <script type="text/javascript" src="http://localhost:9090/jquery-1.7.1.js"></script>
+    <script type="text/javascript">
+      var state = 'initialized';
+      $(document).ready(function() {
+        state = 'ready';
+        $('#form-widgets-text').val('search something');
+        $('#form-widgets-submit').click(function() {
+          $('#form').submit();
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <form action="./search.html" method="POST" id="form">
+      <label>text
+      <input type="text" id="form-widgets-text" name="form.widgets.text" value="" /></label>
+      <label for="form-widgets-submit">submit</label>
+      <input type="button" id="form-widgets-submit" value="submit me" />
+  <BLANKLINE>
+      <!-- no result given -->
+    </form>
+  </body>
+  </html>
+
+
+Also important is to check if the javascript variable ``foo`` was set to
+``ready`` by JQuery ready handling. This means jQuery get processed by our
+own jQuery JavaScript source:
+
+  >>> browser.js('return state')
+  u'ready'
+
+Append some HTML content using explicit JQuery javascript code:
+
+  >>> code = "$('#form').append('<div id=\"new\">appended</div>')"
+  >>> browser.js(code)
+  >>> browser.js("return $('#new').html()")
+  u'appended'
+
+Let's get the default search text input value:
+
+  >>> browser.js('return $("#form-widgets-text").val()')
+  u'search something'
+
+And set a new value:
+
+  >>> browser.js('$("#form-widgets-text").val("search me")')
+
+The html content doesn't show the new value. That's like if you view the source
+in a browser. The injected parts do only exist in the DOM:
+
+  >>> 'search me' in browser.html
+  False
+
+but we can check them with JQuery:
+
+  >>> import time
+  >>> time.sleep(0.1)
+  >>> browser.js('return $("#form-widgets-text").val()')
+  u'search me'
+
+Now submit our form using the input button. Remember input fields with the type
+button will do nothing by default. But as you can see, we will submit the
+form within our javascript method defined in our test form. This is not
+possible with a default zope.testbrowser based on mechanize.
+
+Also note that the submit event is sent to an element when the user is
+attempting to submit a form. It can only be attached to <form> elements.
+Forms can be submitted either by clicking an explicit <input type="submit">,
+<input type="image">, or <button type="submit">, or by pressing Enter when
+certain form elements have focus.
+
+Let's reset the log and click on our submit button:
+
+  >>> browser.get('#form-widgets-submit').click()
+
+As you can see the page gets loaded. But we currently skip javascript errors.
+If you carefully check the log messages, you can see that the JQuery lib get
+applied to the new loaded page. But there is already a JQuery script defined.
+I don't know why this happens, but it seems that in the next test JQuery is
+available:
+
+  >>> print browser.html
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <script type="text/javascript" src="http://localhost:9090/jquery-1.7.1.js"></script>
+    <script type="text/javascript">
+      var state = 'initialized';
+      $(document).ready(function() {
+        state = 'ready';
+        $('#form-widgets-text').val('search something');
+        $('#form-widgets-submit').click(function() {
+          $('#form').submit();
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <form action="./search.html" method="POST" id="form">
+      <label>text
+      <input type="text" id="form-widgets-text" name="form.widgets.text" value="" /></label>
+      <label for="form-widgets-submit">submit</label>
+      <input type="button" id="form-widgets-submit" value="submit me" />
+  <BLANKLINE>
+  <BLANKLINE>
+  <div id="result">
+    <strong>Result</strong>
+    <div class="item">here comes your search result</div>
+  </div>
+  <BLANKLINE>
+    </form>
+  </body>
+  </html>
+
+
+cookies
+-------
+
+Get the cookies:
+
+  >>> print browser.getCookies()
+  []
+
+As you can see, we don't have any cookie yet. Let' set one:
+
+  >>> cookie = {'name':'foobar',
+  ...           'domain':'localhost',
+  ...           'secure':False,
+  ...           'value':'16993',
+  ...           'path':'/',
+  ...           'expiry':2147472000}
+  >>> browser.addCookie(cookie)
+
+And get them back:
+
+  >>> pprint(browser.getCookies())
+  [{u'domain': u'.localhost',
+    u'expires': u'Tue, 19 Jan 2038 01:00:00 GMT',
+    u'expiry': 2147472000,
+    u'httponly': False,
+    u'name': u'foobar',
+    u'path': u'/',
+    u'secure': False,
+    u'value': u'16993'}]
+
+Add another cookie:
+
+  >>> cookie['name'] = 'baz'
+  >>> browser.addCookie(cookie)
+  >>> len(browser.getCookies())
+  2
+
+Delete one cookie:
+  >>> browser.delCookie('foobar')
+  >>> len(browser.getCookies())
+  1
+  >>> browser.getCookies()[0]['name']
+  u'baz'
+
+
+etree
+-----
+
+Our WebKitBrowser browser also supports an lxml etree for simpler DOM
+access:
+
+  >>> browser.etree
+  <Element html at ...>
+
+You can use xpath on such a etree:
+
+  >>> browser.etree.xpath('//body')
+  [<Element body at ...>]
+
+
+We can simulate a (no-op) addHeader to en-us, because that's what
+Selenium Testbrowser does anyway:
+
+  >>> browser.addHeader('Accept-Language', 'en-us,en')
+
+But an addHeader for anything else will fail:
+
+  >>> browser.addHeader('X-My-Header', 'hello')
+  Traceback (most recent call last):
+  ...
+  AssertionError: No addHeader support, except for Accept-Language/en-us
+
+tear down
+---------
+
+Don't close unless the driver was started by this test
+
+#  >>> browser.close()

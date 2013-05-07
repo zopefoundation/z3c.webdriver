@@ -1,0 +1,208 @@
+========
+Controls
+========
+
+Testing the getControls related API on our SeleniumBrowser
+
+  >>> from pprint import pprint
+  >>> from z3c.webdriver.browser import SeleniumBrowser
+  >>> appURL = 'http://localhost:9090/'
+  >>> browser = SeleniumBrowser(driver)
+
+
+  >>> browser.open(appURL + 'controls.html')
+  >>> browser.url
+  u'http://localhost:9090/controls.html'
+
+Check getControl with label:
+
+  >>> control = browser.getControl('submit', index=0)
+  >>> control.get_attribute('id')
+  u'form-widgets-submit'
+
+  >>> control = browser.getControl('text', index=0)
+  >>> control.get_attribute('id')
+  u'form-widgets-text'
+
+  >>> control = browser.getControl('text', index=0)
+  >>> control.value
+  u'search something'
+
+  >>> control = browser.getControl('text', index=1)
+  >>> control.get_attribute('id')
+  u'form-widgets-textarea'
+
+  >>> control = browser.getControl('text', index=1)
+  >>> control.value
+  u'\n           foobar\n           '
+
+  >>> control = browser.getControl('Log in')
+  >>> control.get_attribute('id')
+  u'LOGIN'
+
+Check various controls:
+-----------------------
+
+Text:
+
+  >>> control = browser.getControl(name="form.widgets.text")
+  >>> control.get_attribute('id')
+  u'form-widgets-text'
+
+  >>> control.value
+  u'search something'
+
+  >>> control.value = u'foobar'
+
+  >>> control.value
+  u'foobar'
+
+Checkbox:
+
+  >>> control = browser.getControl(name="form.widgets.checkbox")
+  >>> control[0].get_attribute('id')
+  u'form-widgets-checkMe-1'
+
+  >>> control.value
+  [u'3']
+
+  >>> control.value = ['2']
+
+  >>> control.value
+  [u'2']
+
+  >>> control.value = ['2', '1']
+
+  >>> control.value
+  [u'1', u'2']
+
+Radio:
+
+  >>> control = browser.getControl(name="form.widgets.radio")
+  >>> control[0].get_attribute('id')
+  u'form-widgets-radioMe-1'
+
+  >>> control.value
+  u'1'
+
+  >>> control.value = '2'
+
+  >>> control.value
+  u'2'
+
+  >>> control.value = '3'
+
+  >>> control.value
+  u'3'
+
+Password:
+
+  >>> control = browser.getControl(name="form.widgets.password")
+  >>> control.get_attribute('id')
+  u'form-widgets-password'
+
+  >>> control.value
+  u''
+
+  >>> control.value = u'foopwd'
+
+  >>> control.value
+  u'foopwd'
+
+Textarea:
+
+  >>> control = browser.getControl(name="form.widgets.textarea")
+  >>> control.get_attribute('id')
+  u'form-widgets-textarea'
+
+  >>> control.value
+  u'\n           foobar\n           '
+
+  >>> control.value = u'foo\nbar'
+
+  >>> control.value
+  u'foo\nbar'
+
+Select:
+
+  >>> control = browser.getControl(name="form.widgets.select")
+  >>> control.get_attribute('id')
+  u'form-widgets-select'
+
+  >>> control.value
+  u''
+
+  >>> control.value = 'ALB'
+
+  >>> control.value
+  u'ALB'
+
+  >>> control.value = 'unknown'
+  Traceback (most recent call last):
+  ...
+  AttributeError: Options not found: unknown
+
+
+Multiselect:
+
+  >>> control = browser.getControl(name="form.widgets.multiselect")
+  >>> control.get_attribute('id')
+  u'form-widgets-multiselect'
+
+  >>> control.value
+  [u'john']
+
+  >>> control.value = ['dave']
+
+  >>> control.value
+  [u'dave']
+
+  >>> control.value = ['dave','john']
+
+  >>> control.value
+  [u'john', u'dave']
+
+  >>> control.value = ['dave','unknown']
+  Traceback (most recent call last):
+  ...
+  AttributeError: Options not found: unknown
+
+
+Raising AmbiguityError when multiple controls are found unexpectedly:
+
+  >>> browser.getControl('multiple')
+  Traceback (most recent call last):
+  ...
+  AmbiguityError: Ambiguity: Multiple elements found
+
+
+
+# XXX: file uploads are a PAIN, fix this later
+#File uploads:
+#
+#  >>> browser.open(appURL + 'upload.html')
+#  >>> browser.url
+#  u'http://localhost:9090/upload.html'
+#
+#  >>> import StringIO
+#  >>> browser.getControl('Photo').add_file(
+#  ...     StringIO.StringIO('p' * (5*1024*1024+2)), 'image/jpg', 'photo.jpg')
+#  >>> browser.getControl('Add').click()
+
+
+links
+-----
+
+  >>> browser.open(appURL + 'controls.html')
+
+  >>> browser.getLink('Controller/In').click()
+  >>> browser.url
+  u'http://localhost:9090/search.html#link'
+
+
+tear down
+---------
+
+Don't close unless the driver was started by this test
+
+#  >>> browser.close()
