@@ -2,7 +2,7 @@
 WSGIServer
 ==========
 
-ATTENTION: This test will start a server at localhost:9090
+ATTENTION: This test will start a server at localhost:9091
 
 This test will not start a WSGI server in our test setup. We will do this
 explicit here in our test. Let's define a WSGI application and start a test
@@ -23,12 +23,12 @@ startWSGIServer
 
 Now start a server
 
-  >>> server = startWSGIServer('myapp', myapp, 'http://localhost:9090')
+  >>> server = startWSGIServer('myapp', myapp, 'http://localhost:9091')
 
 As you can see, we can access the server with a simple urllib call:
 
   >>> import httplib
-  >>> conn = httplib.HTTPConnection('localhost:9090')
+  >>> conn = httplib.HTTPConnection('localhost:9091')
   >>> conn.request("GET", "/index.html")
   >>> response = conn.getresponse()
   >>> response.status
@@ -39,7 +39,13 @@ As you can see, we can access the server with a simple urllib call:
 
 
 As you can see, we will log the server response to our logger called:
-p01.testing.server:
+z3c.webdriver.server:
+
+As our WSGI server is multithreaded an async and webdriver is async too
+we need to wait a bit for the log entry to appear:
+
+  >>> import time
+  >>> time.sleep(0.1)
 
   >>> print logger
   INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /index.html HTTP/1.1" 200 25

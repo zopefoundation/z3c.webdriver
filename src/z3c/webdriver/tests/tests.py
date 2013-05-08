@@ -16,6 +16,8 @@ import os
 import os.path
 import doctest
 import unittest
+import sys
+import time
 from zope.testing import renormalizing
 
 from selenium.webdriver import PhantomJS
@@ -346,12 +348,27 @@ def wsgiServerFactory(layer):
     return z3c.webdriver.server.startWSGIServer('testing', app_factory)
 
 
+PHANTOM_RE = re.compile("'phantomjs': '(.*?)'", re.I+re.M+re.S)
+
 def driverFactory(layer):
     args = ['--remote-debugger-port=9010']
     args = []
     here = os.path.dirname(__file__)
-    phantomexec = os.path.join(here, '..', '..', '..', '..', 'bin', 'phantomjs')
-    return PhantomJS(phantomexec, service_args=args)
+    if sys.platform.startswith('win'):
+        # bloody windows cannot shut child processes
+        # and neither supports subprocess.execve
+        binrunner = os.path.join(here, '..', '..', '..', '..', 'bin', 'phantomjs-script.py')
+    else:
+        binrunner = os.path.join(here, '..', '..', '..', '..', 'bin', 'phantomjs')
+    content = open(binrunner).read()
+    m = PHANTOM_RE.search(content)
+    target = m.group(1)
+    if sys.platform.startswith('win'):
+        target = target.replace('\\\\', '\\')
+    
+    rv = PhantomJS(target, service_args=args)
+    time.sleep(0.5)
+    return rv
 
 
 def test_suite():

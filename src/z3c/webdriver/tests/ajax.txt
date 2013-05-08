@@ -21,6 +21,9 @@ Let's setup our test browser:
 
 Check our server log:
 
+  >>> import time
+  >>> time.sleep(0.1)
+
   >>> print logger.normalized
   INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /post.html HTTP/1.1" 200 1699
   INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /jquery-1.7.1.js HTTP/1.1" 200 248235
