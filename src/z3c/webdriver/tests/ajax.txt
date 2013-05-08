@@ -58,11 +58,15 @@ Now let's test if we can send an ajax request started with JQuery:
 Check a page that isn't there. Unfortunately the webdriver developers
 don't want to provide us with the request status nor with the headers.
 
+  >>> time.sleep(0.1)
+
   >>> browser.open(appURL + '404.html')
   >>> print browser.html
   <div>Not Found</div>
 
 We can get some information from our log though:
+
+  >>> time.sleep(0.1)
 
   >>> print logger.normalized
   INFO 127.0.0.1:... - - [.../.../... ...:...:...] "GET /post.html HTTP/1.1" 200 1699
