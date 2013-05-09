@@ -230,7 +230,10 @@ def setUpDoctest(test):
         test.globs['wsgi'] = WSGISERVER
 
     if WEBDRIVER is not None:
-        test.globs['driver'] = WEBDRIVER
+        driver = test.globs['driver'] = WEBDRIVER
+        # trying to clean up our mess -- PhantomJS keeps state
+        # XXX: what else could we clean?
+        driver.delete_all_cookies()
 
 
 #def setUpDoctest(test):
