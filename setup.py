@@ -51,7 +51,7 @@ setup(
     version='0.0.1.dev0',
     author="Adam Groszer and the Zope Community",
     author_email="zope-dev@zope.org",
-    description="An ",
+    description="A wrapper around selenium webdriver and some tools",
     long_description=(
         read('README.txt')
         + '\n\n'
@@ -59,7 +59,7 @@ setup(
     license="ZPL 2.1",
     keywords="selenium webdriver phantomjs",
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Zope Public License',
@@ -73,7 +73,7 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP',
-        'Framework :: Zope3'],
+        'Topic :: Software Development :: Testing'],
     url='https://pypi.python.org/pypi/z3c.webdriver',
     packages=find_packages('src'),
     include_package_data=True,
@@ -83,7 +83,6 @@ setup(
         extra=[
         ],
         test=TESTS_REQUIRE,
-        adding=['zope.app.container >= 3.7'],
         docs=['z3c.recipe.sphinxdoc'],
     ),
     install_requires=[
