@@ -48,7 +48,7 @@ TESTS_REQUIRE = [
 
 setup(
     name='z3c.webdriver',
-    version='0.0.1.dev0',
+    version='0.0.1',
     author="Adam Groszer and the Zope Community",
     author_email="zope-dev@zope.org",
     description="A wrapper around selenium webdriver and some tools",
