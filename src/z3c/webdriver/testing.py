@@ -14,13 +14,7 @@
 import time
 import logging
 import re
-import sys
-import os
 import pprint
-import subprocess
-import urllib
-from tempfile import mkdtemp
-import shutil
 
 UPLOAD_FILE_TEMPFOLDER = ''
 
@@ -236,38 +230,30 @@ def setUpDoctest(test):
         driver.delete_all_cookies()
 
 
-#def setUpDoctest(test):
-#    if WSGISERVER is None:
-#        start_server(test)
-#        test.stopWSGIServerOnTearDown = True
-#    else:
-#        test.stopWSGIServerOnTearDown = False
-#
-#    if WEBDRIVER is None:
-#        args = ['--remote-debugger-port=9011']
-#        driver = test.globs['driver'] = create_phantom_driver(args)
-#        test.stopWebDriverOnTearDown = True
-#    else:
-#        driver = test.globs['driver'] = WEBDRIVER
-#        # XXX, big one:
-#        #      phantomjs behaves as ONE browser instance
-#        #      that means cookies and ANY state is kept between invocations
-#        #      unless the driver is stopped and started again
-#        #      here we're trying to clear at least the cookies
-#        #      OTOH, starting and stopping phantomjs takes around 1.5 secs
-#        driver.delete_all_cookies()
-#        test.stopWebDriverOnTearDown = False
-#    # test.globs['browser'] = browser.SeleniumBrowser(test.globs['driver'])
-#
-#    def wait():
-#        while driver.execute_script("return (document.ajaxRequestsInProcess | 0)") != 0:
-#            time.sleep(0.01)
-#
-#    test.globs['waitForAjax'] = wait
-#
-#
-#def tearDownDoctest(test):
-#    if test.stopWebDriverOnTearDown:
-#        test.globs['driver'].quit()
-#    if test.stopWSGIServerOnTearDown:
-#        stop_server(test)
+def setUpIsolatedDoctest(test, wsgiServerFactory=None, driverFactory=None):
+    if wsgiServerFactory is not None:
+        test.globs['wsgi'] = wsgiServerFactory(test)
+        test.stopWSGIServerOnTearDown = True
+    else:
+        test.wsgi = None
+        test.stopWSGIServerOnTearDown = False
+
+    if driverFactory is not None:
+        driver = test.globs['driver'] = driverFactory(test)
+        test.stopWebDriverOnTearDown = True
+    else:
+        driver = test.globs['driver'] = WEBDRIVER
+        test.stopWebDriverOnTearDown = False
+
+    def wait():
+        while driver.execute_script("return (document.ajaxRequestsInProcess | 0)") != 0:
+            time.sleep(0.01)
+
+    test.globs['waitForAjax'] = wait
+
+
+def tearDownIsolatedDoctest(test):
+    if test.stopWebDriverOnTearDown:
+        test.globs['driver'].quit()
+    if test.stopWSGIServerOnTearDown:
+        test.globs['wsgi'].quit()

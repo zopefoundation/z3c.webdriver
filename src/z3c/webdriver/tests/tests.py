@@ -15,9 +15,9 @@ import re
 import os
 import os.path
 import doctest
-import unittest
 import sys
 import time
+import unittest
 from zope.testing import renormalizing
 
 from selenium.webdriver import PhantomJS
@@ -350,13 +350,16 @@ def wsgiServerFactory(layer):
 
 PHANTOM_RE = re.compile("'phantomjs': '(.*?)'", re.I+re.M+re.S)
 
-def driverFactory(layer):
+
+def phantomJSdriverFactory(layer):
     args = ['--remote-debugger-port=9010']
     args = []
     here = os.path.dirname(__file__)
     if sys.platform.startswith('win'):
         # bloody windows cannot shut child processes
         # and neither supports subprocess.execve
+        # so we need to directly execute phantomjs.exe
+        # that we can dig out of the phantomjs-script.py
         binrunner = os.path.join(here, '..', '..', '..', '..', 'bin', 'phantomjs-script.py')
     else:
         binrunner = os.path.join(here, '..', '..', '..', '..', 'bin', 'phantomjs')
@@ -365,10 +368,16 @@ def driverFactory(layer):
     target = m.group(1)
     if sys.platform.startswith('win'):
         target = target.replace('\\\\', '\\')
-    
+
     rv = PhantomJS(target, service_args=args)
-    time.sleep(0.5)
+    time.sleep(0.1)
     return rv
+
+
+def setUpIsolatedReadme(test):
+    z3c.webdriver.testing.setUpIsolatedDoctest(
+        test, wsgiServerFactory=wsgiServerFactory,
+        driverFactory=phantomJSdriverFactory)
 
 
 def test_suite():
@@ -376,33 +385,25 @@ def test_suite():
     layer = z3c.webdriver.testing.SeleniumTestLayer(
         z3c.webdriver,
         wsgiServerFactory=wsgiServerFactory,
-        driverFactory=driverFactory)
+        driverFactory=phantomJSdriverFactory)
 
     readme = doctest.DocFileSuite('../README.txt',
-                                  #setUp=setUpWSGITestApplication,
-                                  #tearDown=tearDownWSGITestApplication,
                                   setUp=z3c.webdriver.testing.setUpDoctest,
                                   optionflags=optionflags,
                                   checker=checker)
     readme.layer = layer
 
     ajax = doctest.DocFileSuite('ajax.txt',
-                                #setUp=setUpWSGITestApplication,
-                                #tearDown=tearDownWSGITestApplication,
                                 setUp=z3c.webdriver.testing.setUpDoctest,
                                 optionflags=optionflags,
                                 checker=checker)
     ajax.layer = layer
     browsert = doctest.DocFileSuite('browser.txt',
-                                    #setUp=setUpWSGITestApplication,
-                                    #tearDown=tearDownWSGITestApplication,
                                     setUp=z3c.webdriver.testing.setUpDoctest,
                                     optionflags=optionflags,
                                     checker=checker)
     browsert.layer = layer
     controlst = doctest.DocFileSuite('controls.txt',
-                                     #setUp=setUpWSGITestApplication,
-                                     #tearDown=tearDownWSGITestApplication,
                                      setUp=z3c.webdriver.testing.setUpDoctest,
                                      optionflags=optionflags,
                                      checker=checker)
@@ -412,12 +413,22 @@ def test_suite():
                                    optionflags=optionflags,
                                    checker=checker)
 
+    # isolated readme
+    readmeiso = doctest.DocFileSuite(
+        '../README.txt',
+        setUp=setUpIsolatedReadme,
+        tearDown=z3c.webdriver.testing.tearDownIsolatedDoctest,
+        optionflags=optionflags,
+        checker=checker)
+
+
     return unittest.TestSuite((
         ajax,
         readme,
         browsert,
         servert,
         controlst,
+        readmeiso
     ))
 
 
