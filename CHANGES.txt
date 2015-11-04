@@ -1,7 +1,7 @@
 0.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Standardize namespace __init__
 
 
 0.0.1 (2013-05-09)
